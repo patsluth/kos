@@ -140,9 +140,11 @@ void Scheduler::preempt()
 		*/
 		//Assume at this point that the mask is valid; assume we checked for this earlier?
 		//so mask is a value between decimal 1 and 15 inclusive
-		int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
 
-		std::vector<int> _cores;
+
+		//int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
+
+		//std::vector<int> _cores;
 
 		Scheduler *schedulerWithMinQueue = nullptr;
 
@@ -167,44 +169,44 @@ void Scheduler::preempt()
 
 
 
-		int affinityMaskCopy = affinityMask; //create a copy of the mask that we can change while retaining the original
-		if (affinityMaskCopy >= 8) {
-			cores [3] = 1;
-			affinityMaskCopy = affinityMaskCopy - 8;
-		}
-		if (affinityMaskCopy >= 4) {
-	  		cores [2] = 1;
-			affinityMaskCopy = affinityMaskCopy - 4;
-		}
-		if (affinityMaskCopy >= 2) {
-			cores [1] = 1;
-			affinityMaskCopy = affinityMaskCopy - 2;
-		}
-		if (affinityMaskCopy == 1) {
-			cores [0] = 1;
-		}
-		for (int i = 0; i < 3; i = i + 1) {
-			if (cores [i] == 1) {
-				//find the ready count of the processor and replace the 1 in cores with that value.
-				Scheduler *sched = LocalProcessor::getScheduler();//Machine::getScheduler(i);
-				int queueSize = sched->readyCount;
-				cores [i] = queueSize;
-				target = sched;
-			}
-
-			//find the minimum NON-NEGATIVE value in the array and the index will be the new target
-			int min = INT_MAX;
-			int targ = -1;          //target index
-			for (int i = 0; i < 3; i = i + 1) {
-				if ((cores [i] != -1) and (cores [i] < min)) { // if cores[i] is non-negative, and minimal
-					min = cores [i];    //then store new minimum
-					targ = i;           //and new minimum core
-				}
-			}
-
-			switchThread(LocalProcessor::getScheduler());
-			//switchThread(Machine::getScheduler(target)); //switch to queue of core with smallest ready queue
-		}
+		// int affinityMaskCopy = affinityMask; //create a copy of the mask that we can change while retaining the original
+		// if (affinityMaskCopy >= 8) {
+		// 	cores [3] = 1;
+		// 	affinityMaskCopy = affinityMaskCopy - 8;
+		// }
+		// if (affinityMaskCopy >= 4) {
+	 //  		cores [2] = 1;
+		// 	affinityMaskCopy = affinityMaskCopy - 4;
+		// }
+		// if (affinityMaskCopy >= 2) {
+		// 	cores [1] = 1;
+		// 	affinityMaskCopy = affinityMaskCopy - 2;
+		// }
+		// if (affinityMaskCopy == 1) {
+		// 	cores [0] = 1;
+		// }
+		// for (int i = 0; i < 3; i = i + 1) {
+		// 	if (cores [i] == 1) {
+		// 		//find the ready count of the processor and replace the 1 in cores with that value.
+		// 		Scheduler *sched = LocalProcessor::getScheduler();//Machine::getScheduler(i);
+		// 		int queueSize = sched->readyCount;
+		// 		cores [i] = queueSize;
+		// 		target = sched;
+		// 	}
+		//
+		// 	//find the minimum NON-NEGATIVE value in the array and the index will be the new target
+		// 	int min = INT_MAX;
+		// 	int targ = -1;          //target index
+		// 	for (int i = 0; i < 3; i = i + 1) {
+		// 		if ((cores [i] != -1) and (cores [i] < min)) { // if cores[i] is non-negative, and minimal
+		// 			min = cores [i];    //then store new minimum
+		// 			targ = i;           //and new minimum core
+		// 		}
+		// 	}
+		//
+		// 	switchThread(LocalProcessor::getScheduler());
+		// 	//switchThread(Machine::getScheduler(target)); //switch to queue of core with smallest ready queue
+		// }
 	}
 
 
