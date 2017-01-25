@@ -1,0 +1,33 @@
+diff -ruN bochs-2.6.6-orig/cpu/iret.cc bochs-2.6.6/cpu/iret.cc
+--- bochs-2.6.6-orig/cpu/iret.cc	2012-03-25 07:54:32.800419000 -0400
++++ bochs-2.6.6/cpu/iret.cc	2014-06-20 16:36:48.839986202 -0400
+@@ -256,7 +256,7 @@
+     /* stack segment DPL must equal the RPL of the return CS selector,
+      * else #GP(SS selector) */
+     if (ss_descriptor.dpl != cs_selector.rpl) {
+-      BX_ERROR(("iret: SS.dpl != CS selector RPL"));
++      BX_ERROR(("iret: SS.dpl (%d) != CS selector RPL (%d)", ss_descriptor.dpl, cs_selector.rpl));
+       exception(BX_GP_EXCEPTION, raw_ss_selector & 0xfffc);
+     }
+ 
+@@ -496,7 +496,7 @@
+       /* stack segment DPL must equal the RPL of the return CS selector,
+        * else #GP(SS selector) */
+       if (ss_descriptor.dpl != cs_selector.rpl) {
+-        BX_ERROR(("iret64: SS.dpl != CS selector RPL"));
++        BX_ERROR(("iret64: SS.dpl (%d) != CS selector RPL (%d)", ss_descriptor.dpl, cs_selector.rpl));
+         exception(BX_GP_EXCEPTION, raw_ss_selector & 0xfffc);
+       }
+ 
+diff -ruN bochs-2.6.6-orig/Makefile.in bochs-2.6.6/Makefile.in
+--- bochs-2.6.6-orig/Makefile.in	2014-06-06 14:45:31.388982000 -0400
++++ bochs-2.6.6/Makefile.in	2014-06-20 16:37:05.726628039 -0400
+@@ -89,7 +89,7 @@
+ CXXFLAGS = @CXXFLAGS@ @GUI_CXXFLAGS@ $(MCH_CFLAGS) $(FLA_FLAGS) @DEFINE_PLUGIN_PATH@ -DBX_SHARE_PATH='"$(sharedir)"'
+ 
+ LDFLAGS = @LDFLAGS@
+-LIBS = @LIBS@
++LIBS = @LIBS@ -lpthread
+ # To compile with readline:
+ #   linux needs just -lreadline
+ #   solaris needs -lreadline -lcurses
