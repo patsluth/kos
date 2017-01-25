@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -101,6 +101,18 @@ extern "C" int munmap(void* addr, size_t len) {
 
 extern "C" int privilege(void* func, mword a1, mword a2, mword a3, mword a4) {
   return syscallStub(SyscallNum::privilege, (mword)func, a1, a2, a3, a4);
+}
+
+extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
+*mask)
+{
+	return syscallStub(SyscallNum::sched_setaffinity, pid, cpusetsize, mword(mask));
+}
+
+extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
+*mask)
+{
+	return syscallStub(SyscallNum::sched_getaffinity, pid, cpusetsize, mword(mask));
 }
 
 /******* dummy functions *******/

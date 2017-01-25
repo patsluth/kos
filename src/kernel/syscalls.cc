@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -241,11 +241,27 @@ extern "C" int isatty(int fd) {
 //  KABORT1("sbrk"); return (void*)-1;
 //}
 
+extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
+*mask)
+{
+  // TODO: implement
+  return 0;
+}
+
+extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
+*mask)
+{
+  // TODO: implement
+  return 0;
+}
+
 void* __dso_handle = nullptr;
 
 typedef ssize_t (*syscall_t)(mword a1, mword a2, mword a3, mword a4, mword a5);
 static const syscall_t syscalls[] = {
   syscall_t(_exit),
+  syscall_t(sched_setaffinity),
+  syscall_t(sched_getaffinity),
   syscall_t(open),
   syscall_t(close),
   syscall_t(read),
