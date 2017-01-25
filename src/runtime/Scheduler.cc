@@ -20,6 +20,9 @@
 #include "runtime/Thread.h"
 #include "kernel/Output.h"
 
+#include "machine/Machine.h"
+#include "limits.h"
+
 Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this) {
   Thread* idleThread = Thread::create((vaddr)idleStack, minimumStack);
   idleThread->setAffinity(this)->setPriority(idlePriority);
@@ -115,63 +118,73 @@ void Scheduler::resume(Thread& t) {
 
 
 
-void Scheduler::preempt() {               // IRQs disabled, lock count inflated
+void Scheduler::preempt()
+{               // IRQs disabled, lock count inflated
 #if TESTING_NEVER_MIGRATE
-  switchThread(this);
+  	switchThread(this);
 #else /* migration enabled */
-  //Scheduler* target =  Runtime::getCurrThread()->getAffinity();
-  Scheduler *target = nullptr;
-  mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
 
-  if( affinityMask == 0 ) {
-	  /* use Martin's code when no affinity is set via bit mask */
-	  target =  Runtime::getCurrThread()->getAffinity();
-   }  else {
-	  /* CPSC457l: Add code here to scan the affinity mask
-      * and select the processor with the smallest ready count.
-      * Set the scheduler of the selected processor as target
-      * switchThread(target) migrates the current thread to
-      * specified target's ready queue
-      */
-      //Assume at this point that the mask is valid; assume we checked for this earlier?
-      //so mask is a value between decimal 1 and 15 inclusive
-        int cores [4] = { -1, -1, -1, -1 }; //default all cores to disallowed
-        int maskCopy = mask; //create a copy of the mask that we can change while retaining the original
-        if (maskCopy >= 8) {
-            cores [3] = 1;
-            maskCopy = maskCopy - 8;
-        }
-        if (maskCopy >= 4) {
-            cores [2] = 1;
-            maskCopy = maskCopy - 4;
-        }
-        if (maskcopy >= 2) {
-            cores [1] = 1;
-            maskCopy = maskCopy - 2;
-        }
-        if (maskCopy = 1) {
-            cores [0] = 1;
-        }
-        for (int i = 0, i<3, i = i + 1) {
-            if (cores [i] == 1) {
-                //find the ready count of the processor and replace the 1 in cores with that value.
-                Scheduler *sched = Machine::getScheduler(i);
-                int temp = sched->readyCount;
-                cores [i] = temp;
-            }
-        //find the minimum NON-NEGATIVE value in the array and the index will be the new target
-        int min = 999999;       //initial min value; this is a bad value but couldnt think of a better way
-        int targ = -1;          //target index
-        for (int i = 0, i<3, i = i + 1) {
-            if ((cores [i] != -1) and (cores [i] < min)) { // if cores[i] is non-negative, and minimal
-                min = cores [i];    //then store new minimum
-                targ = i;           //and new minimum core
-        }
-        switchThread(Machine::getScheduler(targ)); //switch to queue of core with smallest ready queue
+	// Scheduler *target =  Runtime::getCurrThread()->getAffinity();
+	Scheduler *target = nullptr;
+	mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
+
+	if(affinityMask == 0) {
+		 /* use Martin's code when no affinity is set via bit mask */
+		target = Runtime::getCurrThread()->getAffinity();
+	} else {
+		/* CPSC457l: Add code here to scan the affinity mask
+		* and select the processor with the smallest ready count.
+		* Set the scheduler of the selected processor as target
+		* switchThread(target) migrates the current thread to
+		* specified target's ready queue
+		*/
+		//Assume at this point that the mask is valid; assume we checked for this earlier?
+		//so mask is a value between decimal 1 and 15 inclusive
+		  int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
+		  int affinityMaskCopy = affinityMask; //create a copy of the mask that we can change while retaining the original
+		  if (affinityMaskCopy >= 8) {
+			  cores [3] = 1;
+			  affinityMaskCopy = affinityMaskCopy - 8;
+		  }
+		  if (affinityMaskCopy >= 4) {
+			  cores [2] = 1;
+			  affinityMaskCopy = affinityMaskCopy - 4;
+		  }
+		  if (affinityMaskCopy >= 2) {
+			  cores [1] = 1;
+			  affinityMaskCopy = affinityMaskCopy - 2;
+		  }
+		  if (affinityMaskCopy == 1) {
+			  cores [0] = 1;
+		  }
+		  for (int i = 0; i < 3; i = i + 1) {
+			  if (cores [i] == 1) {
+				  //find the ready count of the processor and replace the 1 in cores with that value.
+				  Scheduler *sched = LocalProcessor::getScheduler();//Machine::getScheduler(i);
+				  int queueSize = sched->readyCount;
+				  cores [i] = queueSize;
+				  target = sched;
+			  }
+
+			  //find the minimum NON-NEGATIVE value in the array and the index will be the new target
+			  int min = INT_MAX;
+			  int targ = -1;          //target index
+			  for (int i = 0; i < 3; i = i + 1) {
+				  if ((cores [i] != -1) and (cores [i] < min)) { // if cores[i] is non-negative, and minimal
+					  min = cores [i];    //then store new minimum
+					  targ = i;           //and new minimum core
+				  }
+			  }
+
+			  switchThread(LocalProcessor::getScheduler());
+			  //switchThread(Machine::getScheduler(target)); //switch to queue of core with smallest ready queue
+		  }
+	}
 
 
 
-   }
+
+
 
 #if TESTING_ALWAYS_MIGRATE
   if (!target) target = partner;
