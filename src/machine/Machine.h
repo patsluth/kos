@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,6 +51,8 @@ public:
   static void registerIrqSync(mword irq, mword vec);
   static void registerIrqAsync(mword irq, funcvoid1_t handler, ptr_t ctx);
   static void deregisterIrqAsync(mword irq, funcvoid1_t handler);
+
+  static Scheduler *getScheduler(int processorIndex);
 };
 
 void Breakpoint2(vaddr ia = 0) __ninline;

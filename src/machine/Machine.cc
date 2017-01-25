@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -516,6 +516,11 @@ void Machine::deregisterIrqAsync(mword irq, funcvoid1_t handler) {
   if (irqTable[irq].handlers.empty()) mapIrq(irq, 0);
 }
 
+Scheduler *Machine::getScheduler(int processorIndex)
+{
+	return processorTable[processorIndex].scheduler;
+}
+
 void Machine::setupIDT(uint32_t number, paddr address, uint32_t ist) {
   KASSERT1(number < maxIDT, number);
   idt[number].Offset00 = (address & 0x000000000000FFFF);
@@ -533,7 +538,7 @@ void Machine::setupIDTable() {
   for (size_t i = 0; i < MaxIrqCount; i += 1) {
     irqTable[i].ioApicAddr    = 0;
     irqTable[i].ioApicIrq     = 0;
-    irqTable[i].globalIrq     = i; 
+    irqTable[i].globalIrq     = i;
     irqTable[i].overrideFlags = 0;
   }
 
