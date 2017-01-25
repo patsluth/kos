@@ -244,15 +244,28 @@ extern "C" int isatty(int fd) {
 extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 *mask)
 {
-  // TODO: implement
-  return 0;
+    if (mask > 15) {
+        // TODO: throw EINVAL
+        return -1; //error thrown, so return -1
+    } else if (pid != 0) {
+        // TODO: throw EPERM
+        return -1; //error thrown, so return -1
+    } else { //mask does not overflow and pid is valid, so continue
+        // TODO: implement
+        return 0; //no error, so return 0
+    }
 }
 
 extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 *mask)
 {
-  // TODO: implement
-  return 0;
+    if (pid != 0) {
+        // TODO: throw EPERM
+        return -1; //Rerror thrown, so return -1
+    } else {
+        // TODO: implement
+        return 0; //no error, so return 0
+    }
 }
 
 void* __dso_handle = nullptr;
