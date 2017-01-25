@@ -1,0 +1,45 @@
+Test process is running on core 2
+
+SCHED_SETAFFINITY TEST 1
+sched_setaffinity unsuccessful
+
+SCHED_SETAFFINITY TEST 2
+sched_setaffinity unsuccessful
+
+SCHED_SETAFFINITY TEST 3
+I am running on core 0
+I am running on core 0
+I am running on core 0
+I am running on core 0
+I am running on core 0
+
+SCHED_SETAFFINITY TEST 4
+I am running on core 1
+I am running on core 1
+I am running on core 1
+I am running on core 1
+I am running on core 1
+I am running on core 2
+I am running on core 1
+I am running on core 2
+I am running on core 1
+I am running on core 2
+I am running on core 2
+I am running on core 2
+I am running on core 2
+I am running on core 2
+I am running on core 2
+I am running on core 2
+I am running on core 1
+I am running on core 2
+I am running on core 1
+I am running on core 2
+
+SCHED_GETAFFINITY TEST 1
+sched_getaffinity unsuccessful
+
+SCHED_GETAFFINITY TEST 2
+Current process has affinity to core 1
+Current process has affinity to core 2
+
+

@@ -1,0 +1,254 @@
+From b7353a75e557b9f18075be410efe7ff213a097c6 Mon Sep 17 00:00:00 2001
+From: priyaa <priyaa.mirra@gmail.com>
+Date: Thu, 25 Jun 2015 15:43:07 -0600
+Subject: [PATCH 1/2] Assignment 1 patch
+
+---
+ src/include/kostypes.h   |  3 +++
+ src/runtime/Runtime.h    |  4 ++--
+ src/runtime/Scheduler.cc | 29 +++++++++++++++++++++++++++--
+ src/runtime/Scheduler.h  |  3 ++-
+ src/runtime/Thread.h     |  9 ++++++++-
+ 5 files changed, 42 insertions(+), 6 deletions(-)
+
+diff --git a/src/include/kostypes.h b/src/include/kostypes.h
+index be993d3..650f684 100644
+--- a/src/include/kostypes.h
++++ b/src/include/kostypes.h
+@@ -26,12 +26,15 @@ typedef  int64_t sword;
+ typedef mword vaddr;
+ typedef mword paddr;
+ 
++typedef mword cpu_set_t;
++
+ static const mword charbits = 8;
+ static const mword bytebits = 8;
+ 
+ typedef char  buf_t;
+ typedef char* bufptr_t;
+ typedef const char* cbufptr_t;
++
+ #else
+ #error unsupported architecture: only __x86_64__ supported at this time
+ #endif
+diff --git a/src/runtime/Runtime.h b/src/runtime/Runtime.h
+index dfe7125..4bd3e4b 100644
+--- a/src/runtime/Runtime.h
++++ b/src/runtime/Runtime.h
+@@ -69,8 +69,8 @@ namespace Runtime {
+ 
+   struct RealLock {
+     RealLock() { LocalProcessor::lock(true); }    // disable IRQs
+-    // destructor not needed
+-  };
++    ~RealLock() { LocalProcessor::unlock(true); } // deflate lock count, enable IRQs
++ };
+ 
+   /**** AddressSpace-related interface ****/
+ 
+diff --git a/src/runtime/Scheduler.cc b/src/runtime/Scheduler.cc
+index 7d760c3..0ae7581 100644
+--- a/src/runtime/Scheduler.cc
++++ b/src/runtime/Scheduler.cc
+@@ -44,7 +44,9 @@ inline void Scheduler::switchThread(Scheduler* target, Args&... a) {
+   CHECK_LOCK_MIN(sizeof...(Args));
+   Thread* nextThread;
+   readyLock.acquire();
+-  for (mword i = 0; i < (target ? idlePriority : maxPriority); i += 1) {
++//  for (mword i = 0; i < (target ? idlePriority : maxPriority); i += 1) {
++  for (mword i = 0; i < ((target == this) ? idlePriority : maxPriority);
++i += 1) {
+     if (!readyQueue[i].empty()) {
+       nextThread = readyQueue[i].pop_front();
+       readyCount -= 1;
+@@ -111,11 +113,29 @@ void Scheduler::resume(Thread& t) {
+   else Runtime::getScheduler()->enqueue(t);
+ }
+ 
++
++
+ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
+ #if TESTING_NEVER_MIGRATE
+   switchThread(this);
+ #else /* migration enabled */
+-  Scheduler* target = Runtime::getCurrThread()->getAffinity();
++  //Scheduler* target =  Runtime::getCurrThread()->getAffinity();
++  Scheduler *target = nullptr;
++  mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
++
++  if( affinityMask == 0 ) {
++	  /* use Martin's code when no affinity is set via bit mask */
++	  target =  Runtime::getCurrThread()->getAffinity();
++   }  else {
++	  /* CPSC457l: Add code here to scan the affinity mask
++      * and select the processor with the smallest ready count.
++      * Set the scheduler of the selected processor as target
++      * switchThread(target) migrates the current thread to
++      * specified target's ready queue
++      */
++
++   }
++
+ #if TESTING_ALWAYS_MIGRATE
+   if (!target) target = partner;
+ #else /* simple load balancing */
+@@ -143,3 +163,8 @@ void Scheduler::terminate() {
+   switchThread(nullptr);
+   unreachable();
+ }
++
++void Scheduler::yield(){
++  Runtime::RealLock rl;
++  preempt();
++}
+diff --git a/src/runtime/Scheduler.h b/src/runtime/Scheduler.h
+index bc86000..eae3fa8 100644
+--- a/src/runtime/Scheduler.h
++++ b/src/runtime/Scheduler.h
+@@ -34,7 +34,7 @@ class Scheduler {
+   volatile mword resumption;
+ 
+   Scheduler* partner;
+-
++
+   template<typename... Args>
+   inline void switchThread(Scheduler* target, Args&... a);
+ 
+@@ -51,6 +51,7 @@ public:
+   void suspend(BasicLock& lk);
+   void suspend(BasicLock& lk1, BasicLock& lk2);
+   void terminate() __noreturn;
++  void yield();
+ };
+ 
+ #endif /* _Scheduler_h_ */
+diff --git a/src/runtime/Thread.h b/src/runtime/Thread.h
+index a09bb0e..953e1e2 100644
+--- a/src/runtime/Thread.h
++++ b/src/runtime/Thread.h
+@@ -33,6 +33,9 @@ class Thread : public EmbeddedList<Thread>::Link {
+ 
+   mword priority;           // scheduling priority
+   bool affinity;            // stick with scheduler
++  cpu_set_t affinityMask;	 	 // stick with multiple schedulers
++  // affinity mask of 0 means that the thread can be scheduled on any processor
++
+   Scheduler* nextScheduler; // resume on same core (for now)
+ 
+   Runtime::MachContext ctx;
+@@ -47,7 +50,7 @@ protected:
+ 
+   Thread(vaddr sb, size_t ss) :
+     stackPointer(vaddr(this)), stackBottom(sb), stackSize(ss),
+-    priority(defPriority), affinity(false), nextScheduler(nullptr),
++    priority(defPriority), affinity(false), affinityMask(0), nextScheduler(nullptr),
+     state(Running), unblockInfo(nullptr) {}
+ 
+   // called directly when creating idle thread(s)
+@@ -81,6 +84,10 @@ public:
+   }
+ 
+   Thread* setPriority(mword p)      { priority = p; return this; }
++
++  void   setAffinityMask( cpu_set_t mask ) { affinityMask = mask; }
++  cpu_set_t  getAffinityMask() { return affinityMask; }
++
+   Thread* setAffinity(Scheduler* s) { affinity = (nextScheduler = s); return this; }
+   Scheduler* getAffinity() const    { return affinity ? nextScheduler : nullptr; }
+ 
+-- 
+1.9.1
+
+
+From 87519c8789909d56ac1e7e0c213145c4893d9a8e Mon Sep 17 00:00:00 2001
+From: priyaa <priyaa.mirra@gmail.com>
+Date: Thu, 25 Jun 2015 16:38:37 -0600
+Subject: [PATCH 2/2] Patch for get_core_count
+
+---
+ src/include/syscalls.h | 3 +++
+ src/kernel/syscalls.cc | 8 ++++++++
+ src/ulib/libKOS.cc     | 6 ++++++
+ 3 files changed, 17 insertions(+)
+
+diff --git a/src/include/syscalls.h b/src/include/syscalls.h
+index 9a9c429..4652b16 100644
+--- a/src/include/syscalls.h
++++ b/src/include/syscalls.h
+@@ -17,6 +17,8 @@ extern "C" int munmap(void* addr, size_t len);
+ 
+ extern "C" pid_t getcid();
+ 
++extern "C" long get_core_count();
++
+ extern "C" int privilege(void*, mword, mword, mword, mword);
+ 
+ namespace SyscallNum {
+@@ -28,6 +30,7 @@ enum : mword {
+   read,
+   write,
+   lseek,
++  get_core_count,
+   getpid,
+   getcid,
+   usleep,
+diff --git a/src/kernel/syscalls.cc b/src/kernel/syscalls.cc
+index 5a0bd06..763e731 100644
+--- a/src/kernel/syscalls.cc
++++ b/src/kernel/syscalls.cc
+@@ -21,6 +21,8 @@
+ #include "kernel/Process.h"
+ #include "world/Access.h"
+ #include "machine/Processor.h"
++#include "machine/Machine.h"
++
+ 
+ #include "syscalls.h"
+ #include "pthread.h"
+@@ -115,6 +117,11 @@ extern "C" off_t lseek(int fildes, off_t offset, int whence) {
+   return ret;
+ }
+ 
++/* I have added a system call here - Priyaa */
++extern "C" long get_core_count(){
++	return Machine::getProcessorCount();
++}
++
+ extern "C" pid_t getpid() {
+   return CurrProcess().getID();
+ }
+@@ -244,6 +251,7 @@ static const syscall_t syscalls[] = {
+   syscall_t(read),
+   syscall_t(write),
+   syscall_t(lseek),
++  syscall_t(get_core_count),
+   syscall_t(getpid),
+   syscall_t(getcid),
+   syscall_t(usleep),
+diff --git a/src/ulib/libKOS.cc b/src/ulib/libKOS.cc
+index 46c6bec..df25685 100644
+--- a/src/ulib/libKOS.cc
++++ b/src/ulib/libKOS.cc
+@@ -15,6 +15,7 @@
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+ #include "syscalls.h"
++#include "kostypes.h"
+ 
+ #include <string.h>
+ 
+@@ -70,6 +71,11 @@ extern "C" off_t lseek(int fildes, off_t offset, int whence) {
+   if (ret < 0) { *__errno() = -ret; return -1; } else return ret;
+ }
+ 
++/*added by Priyaa*/
++extern "C" long get_core_count() {
++  return syscallStub(SyscallNum::get_core_count);
++}
++
+ extern "C" pid_t getpid() {
+   return syscallStub(SyscallNum::getpid);
+ }
+-- 
+1.9.1
+

@@ -1,0 +1,56 @@
+How to apply patch for assignment 1
+
+============================================
+APPLYING PATCH IN A FRESH KOS DIRECTORY
+============================================
+
+********************************************
+Steps: 
+********************************************
+(Execute the following commands in the terminal)
+1.cp /usr/local/kos/src ~/kos
+2.cd ~/kos
+3.make run 
+This will open QEMU emulator. KOS boots. After completion of boot, characters are printed inifitely along with "ping.." message. Close the window. 
+4.git init
+5. Create a file called ".gitignore" in kos directory and add the following to the file. Save and close.
+      *.o
+      .*.swp
+      *.txt
+      *.sys
+      *.out
+      *.debug
+      *.patch
+      *.a
+      /src/stage
+      /src/user/exec
+      *.dep
+      *.state
+      *.git
+      *ignore
+6. git add -A
+7. git commit -m "First KOS commit"
+8. git checkout -b assignment2
+9. Download the old patch uploaded with assignment2 named affinity_mask_assignment.patch into kos directory.
+10. git apply affinity_mask_assignment.patch
+(You must not receive any errors. If you do, check manually if patch has been applied. If patch is not applied, debug. If debugging does not work,email your TA the error message and other relevant details)
+11. git status
+(You must see the following output)
+On branch assignment2
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   src/include/kostypes.h
+	modified:   src/include/syscalls.h
+	modified:   src/kernel/syscalls.cc
+	modified:   src/runtime/Runtime.h
+	modified:   src/runtime/Scheduler.cc
+	modified:   src/runtime/Scheduler.h
+	modified:   src/runtime/Thread.h
+	modified:   src/ulib/libKOS.cc
+12. git add -A
+13. git commit -m "Assignment2 patch commit"
+14. make clean
+(Without this step, KOS will crash after boot)
+15. make run
