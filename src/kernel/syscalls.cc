@@ -252,7 +252,10 @@ extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
         return -1; //error thrown, so return -1
     } else { //mask does not overflow and pid is valid, so continue
 
-		Runtime::getCurrThread()->setAffinityMask(*mask);
+		Thread *thread = Runtime::getCurrThread();
+		thread->setAffinityMask(*mask);
+		//Scheduler *scheduler = thread->getAffinity();
+		//scheduler->preempt();
 
         return 0; //no error, so return 0
     }

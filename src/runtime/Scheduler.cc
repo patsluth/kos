@@ -144,28 +144,22 @@ void Scheduler::preempt()
 
 		//int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
 
-		//std::vector<int> _cores;
-
 		Scheduler *schedulerWithMinQueue = nullptr;
 
-		for (int i = 0; i < Machine::getProcessorCount(); i += 1) {
+		for (int i = 0; i < (int)Machine::getProcessorCount(); i += 1) {
 			int bitmask = 1 << i;
 			int currentBit = affinityMask & bitmask;
 
-			if (currentBit == 1) {
+			if (currentBit != 0) {
 				Scheduler *_scheduler = Machine::getScheduler(i);
 
-				if (schedulerWithMinQueue == nullptr || schedulerWithMinQueue->readyCount < _scheduler->readyCount) {
+				if (schedulerWithMinQueue != nullptr && schedulerWithMinQueue->readyCount < _scheduler->readyCount) {
 					schedulerWithMinQueue = _scheduler;
 				}
 			}
-			// _cores.push_back(currentBit == 1 ? 1 : -1);
 		}
 
 		target = schedulerWithMinQueue;
-
-
-
 
 
 
