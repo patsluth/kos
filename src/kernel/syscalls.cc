@@ -246,10 +246,10 @@ extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 {
     if (*mask > 15) {
         errno = EINVAL;
-        return -1; //error thrown, so return -1
+        return EINVAL; //error thrown, so return -1
     } else if (pid != 0) {
         errno = EPERM;
-        return -1; //error thrown, so return -1
+        return EPERM; //error thrown, so return -1
     } else { //mask does not overflow and pid is valid, so continue
 
 		Thread *thread = Runtime::getCurrThread();
@@ -266,7 +266,7 @@ extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 {
     if (pid != 0) {
         errno = EPERM;
-        return -1; //error thrown, so return -1
+        return EPERM; //error thrown, so return -1
     } else {
 
 		auto _mask = Runtime::getCurrThread()->getAffinityMask();
