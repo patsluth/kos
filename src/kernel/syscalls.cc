@@ -244,22 +244,15 @@ extern "C" int isatty(int fd) {
 extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 *mask)
 {
-    if (*mask > 15) {
-        errno = EINVAL;
-        return EINVAL; //error thrown, so return -1
-    } else if (pid != 0) {
-        errno = EPERM;
-        return EPERM; //error thrown, so return -1
+    if (*mask > 15) { //checks if mask is valid
+        errno = EINVAL; //set errno
+        return EINVAL; //error thrown, so return errno value
+    } else if (pid != 0) { //checks that pid is valid
+        errno = EPERM; //set errno
+        return EPERM; //error thrown, so return errno value
     } else { //mask does not overflow and pid is valid, so continue
-
-		// Thread *thread = Runtime::getCurrThread();
-		// thread->setAffinityMask(*mask);
-		// Scheduler *scheduler = Machine::getAffinity();+
-		// scheduler->yield();
-
-		LocalProcessor::getCurrThread()->setAffinityMask(*mask);
-		LocalProcessor::getScheduler()->yield();
-
+		LocalProcessor::getCurrThread()->setAffinityMask(*mask); //get the current thread and set the mask
+		LocalProcessor::getScheduler()->yield(); //reschedule current thread
         return 0; //no error, so return 0
     }
 }
@@ -267,15 +260,12 @@ extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
 *mask)
 {
-    if (pid != 0) {
-        errno = EPERM;
-        return EPERM; //error thrown, so return -1
-    } else {
-
-		auto _mask = LocalProcessor::getCurrThread()->getAffinityMask();
-		// auto _mask = Runtime::getCurrThread()->getAffinityMask();
-		mask = &_mask;
-
+    if (pid != 0) { //checks that pid is valid
+        errno = EPERM; //set errno
+        return EPERM; //error thrown, so return errno value
+    } else { //pid is valid; so continue
+        auto _mask = LocalProcessor::getCurrThread()->getAffinityMask(); //gets the mask of the current thread
+		mask = &_mask; 
         return 0; //no error, so return 0
     }
 }

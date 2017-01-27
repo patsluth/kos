@@ -516,6 +516,9 @@ void Machine::deregisterIrqAsync(mword irq, funcvoid1_t handler) {
   if (irqTable[irq].handlers.empty()) mapIrq(irq, 0);
 }
 
+    /*
+     * Returns the scheduler at a given index
+     */
 Scheduler *Machine::getScheduler(int processorIndex)
 {
 	return &schedulerTable[processorIndex];

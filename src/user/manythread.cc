@@ -25,8 +25,8 @@ static void* task(void* x) {
   int id = getcid();
   for (;;) {
     pthread_mutex_lock(&iolock);
-    //std::cout << *(char*)x << id << ' ';
-    //std::cout.flush();
+    std::cout << *(char*)x << id << ' ';
+    std::cout.flush();
     pthread_mutex_unlock(&iolock);
     int newid = id;
     int cnt = 0;
