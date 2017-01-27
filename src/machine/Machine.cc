@@ -518,7 +518,7 @@ void Machine::deregisterIrqAsync(mword irq, funcvoid1_t handler) {
 
 Scheduler *Machine::getScheduler(int processorIndex)
 {
-	return processorTable[processorIndex].scheduler;
+	return &schedulerTable[processorIndex];
 }
 
 void Machine::setupIDT(uint32_t number, paddr address, uint32_t ist) {

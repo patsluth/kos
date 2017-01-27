@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@ static void* task(void* x) {
   int id = getcid();
   for (;;) {
     pthread_mutex_lock(&iolock);
-    std::cout << *(char*)x << id << ' ';
-    std::cout.flush();
+    //std::cout << *(char*)x << id << ' ';
+    //std::cout.flush();
     pthread_mutex_unlock(&iolock);
     int newid = id;
     int cnt = 0;

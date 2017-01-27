@@ -126,11 +126,11 @@ void Scheduler::preempt()
 
 	// Scheduler *target =  Runtime::getCurrThread()->getAffinity();
 	Scheduler *target = nullptr;
-	mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
+	cpu_set_t affinityMask = LocalProcessor::getCurrThread()->getAffinityMask();
 
 	if(affinityMask == 0) {
 		 /* use Martin's code when no affinity is set via bit mask */
-		target = Runtime::getCurrThread()->getAffinity();
+		target = LocalProcessor::getCurrThread()->getAffinity();
 	} else {
 		/* CPSC457l: Add code here to scan the affinity mask
 		* and select the processor with the smallest ready count.
@@ -142,9 +142,8 @@ void Scheduler::preempt()
 		//so mask is a value between decimal 1 and 15 inclusive
 
 
-		//int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
 
-		Scheduler *schedulerWithMinQueue = nullptr;
+		//int cores[4] = { -1, -1, -1, -1 }; //default all cores to disallowed
 
 		for (int i = 0; i < (int)Machine::getProcessorCount(); i += 1) {
 			int bitmask = 1 << i;
@@ -153,14 +152,14 @@ void Scheduler::preempt()
 			if (currentBit != 0) {
 				Scheduler *_scheduler = Machine::getScheduler(i);
 
-				if (schedulerWithMinQueue != nullptr && schedulerWithMinQueue->readyCount < _scheduler->readyCount) {
-					schedulerWithMinQueue = _scheduler;
+				if (target == nullptr) {
+					target = _scheduler;
+				}
+				if (target->readyCount > _scheduler->readyCount){
+					target = _scheduler;
 				}
 			}
 		}
-
-		target = schedulerWithMinQueue;
-
 
 
 		// int affinityMaskCopy = affinityMask; //create a copy of the mask that we can change while retaining the original

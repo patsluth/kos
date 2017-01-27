@@ -252,10 +252,13 @@ extern "C" int sched_setaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
         return EPERM; //error thrown, so return -1
     } else { //mask does not overflow and pid is valid, so continue
 
-		Thread *thread = Runtime::getCurrThread();
-		thread->setAffinityMask(*mask);
-		//Scheduler *scheduler = thread->getAffinity();
-		//scheduler->preempt();
+		// Thread *thread = Runtime::getCurrThread();
+		// thread->setAffinityMask(*mask);
+		// Scheduler *scheduler = Machine::getAffinity();+
+		// scheduler->yield();
+
+		LocalProcessor::getCurrThread()->setAffinityMask(*mask);
+		LocalProcessor::getScheduler()->yield();
 
         return 0; //no error, so return 0
     }
@@ -269,7 +272,8 @@ extern "C" int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t
         return EPERM; //error thrown, so return -1
     } else {
 
-		auto _mask = Runtime::getCurrThread()->getAffinityMask();
+		auto _mask = LocalProcessor::getCurrThread()->getAffinityMask();
+		// auto _mask = Runtime::getCurrThread()->getAffinityMask();
 		mask = &_mask;
 
         return 0; //no error, so return 0
