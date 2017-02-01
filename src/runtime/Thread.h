@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,13 +17,17 @@
 #ifndef _Thread_h_
 #define _Thread_h_ 1
 
-#include "generic/EmbeddedContainers.h" 
+#include "generic/EmbeddedContainers.h"
 #include "runtime/Runtime.h"
 
 class Scheduler;
 class UnblockInfo;
 
-class Thread : public EmbeddedList<Thread>::Link {
+class Thread : public EmbeddedList<Thread>::Link
+{
+
+public:
+
   friend class Scheduler;   // Scheduler accesses many internals
   friend void Runtime::postResume(bool, Thread&, AddressSpace&);
 
@@ -44,7 +48,6 @@ class Thread : public EmbeddedList<Thread>::Link {
   Thread(const Thread&) = delete;
   const Thread& operator=(const Thread&) = delete;
 
-protected:
   enum State { Running, Blocked, Cancelled, Finishing } state;
   UnblockInfo* unblockInfo; // unblock vs. timeout vs. cancel
 
@@ -56,7 +59,6 @@ protected:
   // called directly when creating idle thread(s)
   static Thread* create(vaddr mem, size_t ss);
 
-public:
   static Thread* create(size_t ss);
   static Thread* create();
   void destroy();
