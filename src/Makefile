@@ -134,13 +134,13 @@ kernel.sys.debug: linker.ld $(AS_OBJECTS) $(OBJECTS) $(KERNLIBS)
 
 $(OBJECTS): %.o: %.cc
 	$(CXX) -c $(CXXFLAGS) $<
-	
+
 $(AS_OBJECTS): %.o: %.S
 	$(AS) $(ASFLAGS) $< -o $@
 
 $(SOBJECTS): %.s: %.cc
 	$(CXX) -S $(PREFLAGS) $<
-	
+
 $(EOBJECTS): %.e: %.cc
 	$(CXX) -E $(PREFLAGS) $< > $@
 
@@ -161,7 +161,7 @@ userfiles: $(USERLIBS)
 
 defines:
 	$(CXX) -dM -E - < /dev/null
-	
+
 echo:
 	@echo SOURCES: $(SOURCES)
 	@echo BSOURCES: $(BSOURCES)
@@ -174,7 +174,7 @@ clean:
 		$(AS_OBJECTS) $(OBJECTS) $(SOBJECTS) $(EOBJECTS)
 # rm -f $(BSOURCES:%.cc=%.{e,o,s})
 	rm -rf $(STAGE)
-	rm -f Makefile.o.dep Makefile.s.dep Makefile.e.dep
+	rm -f Makefile.o.dep Makefile.s.dep Makefile.e.dep Makefile.dep
 	rm -f nohup.out
 
 vclean: clean
