@@ -1,0 +1,48 @@
+diff -ruN gdb-7.8-orig/gdb/configure.tgt gdb-7.8/gdb/configure.tgt
+--- gdb-7.8-orig/gdb/configure.tgt	2014-06-11 12:34:41.000000000 -0400
++++ gdb-7.8/gdb/configure.tgt	2014-09-15 21:41:58.752173387 -0400
+@@ -663,6 +663,13 @@
+ 			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o"
+ 	build_gdbserver=yes
+ 	;;
++x86_64-*-elf*)
++	# Target: GNU/Linux x86-64
++	gdb_target_obs="amd64-tdep.o amd64-linux-tdep.o i386-tdep.o \
++			i387-tdep.o i386-linux-tdep.o glibc-tdep.o \
++			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o"
++	build_gdbserver=yes
++	;;
+ x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)
+ 	# Target: FreeBSD/amd64
+ 	gdb_target_obs="amd64-tdep.o amd64fbsd-tdep.o i386-tdep.o \
+@@ -705,7 +712,7 @@
+ case "${targ}" in
+ *-*-freebsd* | *-*-kfreebsd*-gnu)
+ 		gdb_osabi=GDB_OSABI_FREEBSD_ELF ;;
+-*-*-linux* | *-*-uclinux*)
++*-*-linux* | *-*-uclinux* | *-*-elf*)
+ 		gdb_osabi=GDB_OSABI_LINUX ;;
+ *-*-nto*)	gdb_osabi=GDB_OSABI_QNXNTO ;;
+ m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
+diff -ruN gdb-7.8-orig/gdb/remote.c gdb-7.8/gdb/remote.c
+--- gdb-7.8-orig/gdb/remote.c	2014-07-29 08:37:42.000000000 -0400
++++ gdb-7.8/gdb/remote.c	2014-09-15 21:41:58.752173387 -0400
+@@ -6062,8 +6062,16 @@
+   buf_len = strlen (rs->buf);
+ 
+   /* Further sanity checks, with knowledge of the architecture.  */
+-  if (buf_len > 2 * rsa->sizeof_g_packet)
+-    error (_("Remote 'g' packet reply is too long: %s"), rs->buf);
++  if (buf_len > 2 * rsa->sizeof_g_packet) {
++    rsa->sizeof_g_packet = buf_len;
++    for (i = 0; i < gdbarch_num_regs (gdbarch); i++) {
++    if (rsa->regs[i].pnum == -1) continue;
++      if (rsa->regs[i].offset >= rsa->sizeof_g_packet)
++        rsa->regs[i].in_g_packet = 0;
++      else
++        rsa->regs[i].in_g_packet = 1;
++    }
++  }
+ 
+   /* Save the size of the packet sent to us by the target.  It is used
+      as a heuristic when determining the max size of packets that the

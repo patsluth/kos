@@ -1,0 +1,257 @@
+diff -ruN binutils-2.24-orig/bfd/bfd-in2.h binutils-2.24/bfd/bfd-in2.h
+--- binutils-2.24-orig/bfd/bfd-in2.h	2013-11-18 03:40:15.000000000 -0500
++++ binutils-2.24/bfd/bfd-in2.h	2014-06-20 11:51:09.203846835 -0400
+@@ -300,8 +300,11 @@
+ #define bfd_is_com_section(ptr) (((ptr)->flags & SEC_IS_COMMON) != 0)
+ 
+ #define bfd_set_section_vma(bfd, ptr, val) (((ptr)->vma = (ptr)->lma = (val)), ((ptr)->user_set_vma = TRUE), TRUE)
++#define bfd_set_section_vmaX(bfd, ptr, val) (((ptr)->vma = (ptr)->lma = (val)), ((ptr)->user_set_vma = TRUE))
+ #define bfd_set_section_alignment(bfd, ptr, val) (((ptr)->alignment_power = (val)),TRUE)
++#define bfd_set_section_alignmentX(bfd, ptr, val) (((ptr)->alignment_power = (val)))
+ #define bfd_set_section_userdata(bfd, ptr, val) (((ptr)->userdata = (val)),TRUE)
++#define bfd_set_section_userdataX(bfd, ptr, val) (((ptr)->userdata = (val)))
+ /* Find the address one past the end of SEC.  */
+ #define bfd_get_section_limit(bfd, sec) \
+   (((bfd)->direction != write_direction && (sec)->rawsize != 0	\
+diff -ruN binutils-2.24-orig/bfd/bfd-in.h binutils-2.24/bfd/bfd-in.h
+--- binutils-2.24-orig/bfd/bfd-in.h	2013-11-04 10:33:37.000000000 -0500
++++ binutils-2.24/bfd/bfd-in.h	2014-06-20 11:51:09.203846835 -0400
+@@ -293,8 +293,11 @@
+ #define bfd_is_com_section(ptr) (((ptr)->flags & SEC_IS_COMMON) != 0)
+ 
+ #define bfd_set_section_vma(bfd, ptr, val) (((ptr)->vma = (ptr)->lma = (val)), ((ptr)->user_set_vma = TRUE), TRUE)
++#define bfd_set_section_vmaX(bfd, ptr, val) (((ptr)->vma = (ptr)->lma = (val)), ((ptr)->user_set_vma = TRUE))
+ #define bfd_set_section_alignment(bfd, ptr, val) (((ptr)->alignment_power = (val)),TRUE)
++#define bfd_set_section_alignmentX(bfd, ptr, val) (((ptr)->alignment_power = (val)))
+ #define bfd_set_section_userdata(bfd, ptr, val) (((ptr)->userdata = (val)),TRUE)
++#define bfd_set_section_userdataX(bfd, ptr, val) (((ptr)->userdata = (val)))
+ /* Find the address one past the end of SEC.  */
+ #define bfd_get_section_limit(bfd, sec) \
+   (((bfd)->direction != write_direction && (sec)->rawsize != 0	\
+diff -ruN binutils-2.24-orig/binutils/bucomm.c binutils-2.24/binutils/bucomm.c
+--- binutils-2.24-orig/binutils/bucomm.c	2013-11-04 10:33:37.000000000 -0500
++++ binutils-2.24/binutils/bucomm.c	2014-06-20 11:51:09.207180137 -0400
+@@ -127,7 +127,7 @@
+ }
+ 
+ void
+-fatal VPARAMS ((const char *format, ...))
++fatal (const char *format, ...)
+ {
+   VA_OPEN (args, format);
+   VA_FIXEDARG (args, const char *, format);
+@@ -138,7 +138,7 @@
+ }
+ 
+ void
+-non_fatal VPARAMS ((const char *format, ...))
++non_fatal (const char *format, ...)
+ {
+   VA_OPEN (args, format);
+   VA_FIXEDARG (args, const char *, format);
+diff -ruN binutils-2.24-orig/binutils/objcopy.c binutils-2.24/binutils/objcopy.c
+--- binutils-2.24-orig/binutils/objcopy.c	2013-11-04 10:33:37.000000000 -0500
++++ binutils-2.24/binutils/objcopy.c	2014-06-20 11:51:09.207180137 -0400
+@@ -1890,7 +1890,7 @@
+ 		/* Umm, not sure what to do in this case.  */
+ 		debuglink_vma = 0x1000;
+ 
+-	      bfd_set_section_vma (obfd, gnu_debuglink_section, debuglink_vma);
++	      bfd_set_section_vmaX (obfd, gnu_debuglink_section, debuglink_vma);
+ 	    }
+ 	}
+     }
+diff -ruN binutils-2.24-orig/gas/config/obj-elf.c binutils-2.24/gas/config/obj-elf.c
+--- binutils-2.24-orig/gas/config/obj-elf.c	2013-11-04 10:33:37.000000000 -0500
++++ binutils-2.24/gas/config/obj-elf.c	2014-06-20 11:51:09.207180137 -0400
+@@ -1937,7 +1937,7 @@
+ 
+   /* Force the section to align to a longword boundary.  Without this,
+      UnixWare ar crashes.  */
+-  bfd_set_section_alignment (stdoutput, seg, 2);
++  bfd_set_section_alignmentX (stdoutput, seg, 2);
+ 
+   /* Make space for this first symbol.  */
+   p = frag_more (12);
+diff -ruN binutils-2.24-orig/gas/subsegs.c binutils-2.24/gas/subsegs.c
+--- binutils-2.24-orig/gas/subsegs.c	2013-11-04 10:33:37.000000000 -0500
++++ binutils-2.24/gas/subsegs.c	2014-06-20 11:51:09.207180137 -0400
+@@ -67,7 +67,7 @@
+     {
+       seginfo = (segment_info_type *) xcalloc (1, sizeof (*seginfo));
+       seginfo->bfd_section = seg;
+-      bfd_set_section_userdata (stdoutput, seg, seginfo);
++      bfd_set_section_userdataX (stdoutput, seg, seginfo);
+     }
+ }
+ 
+@@ -169,7 +169,7 @@
+       secptr->output_section = secptr;
+       seginfo = (segment_info_type *) xcalloc (1, sizeof (*seginfo));
+       seginfo->bfd_section = secptr;
+-      bfd_set_section_userdata (stdoutput, secptr, seginfo);
++      bfd_set_section_userdataX (stdoutput, secptr, seginfo);
+     }
+   return secptr;
+ }
+diff -ruN binutils-2.24-orig/gas/write.c binutils-2.24/gas/write.c
+--- binutils-2.24-orig/gas/write.c	2013-11-04 10:33:38.000000000 -0500
++++ binutils-2.24/gas/write.c	2014-06-20 11:51:09.207180137 -0400
+@@ -363,7 +363,7 @@
+     return;
+ 
+   if ((unsigned int) align > bfd_get_section_alignment (stdoutput, seg))
+-    bfd_set_section_alignment (stdoutput, seg, align);
++    bfd_set_section_alignmentX (stdoutput, seg, align);
+ }
+ 
+ int
+diff -ruN binutils-2.24-orig/ld/ldlang.c binutils-2.24/ld/ldlang.c
+--- binutils-2.24-orig/ld/ldlang.c	2013-11-04 10:33:39.000000000 -0500
++++ binutils-2.24/ld/ldlang.c	2014-06-20 11:53:54.755631204 -0400
+@@ -4831,7 +4831,7 @@
+ 			   " section %s\n"), os->name);
+ 
+ 		input = os->children.head->input_section.section;
+-		bfd_set_section_vma (os->bfd_section->owner,
++		bfd_set_section_vmaX (os->bfd_section->owner,
+ 				     os->bfd_section,
+ 				     bfd_section_vma (input->owner, input));
+ 		os->bfd_section->size = input->size;
+@@ -4916,7 +4916,7 @@
+ 			     os->name, (unsigned long) (newdot - savedot));
+ 		  }
+ 
+-		bfd_set_section_vma (0, os->bfd_section, newdot);
++		bfd_set_section_vmaX (0, os->bfd_section, newdot);
+ 
+ 		os->bfd_section->output_offset = 0;
+ 	      }
+diff -ruN gcc-4.9.0-orig/gcc/config/i386/i386elf.h gcc-4.9.0/gcc/config/i386/i386elf.h
+--- gcc-4.9.0-orig/gcc/config/i386/i386elf.h	2014-01-02 17:23:26.000000000 -0500
++++ gcc-4.9.0/gcc/config/i386/i386elf.h	2014-07-23 21:32:00.583474913 -0400
+@@ -29,12 +29,12 @@
+ #undef CPP_SPEC
+ #define CPP_SPEC ""
+ 
+-#define ENDFILE_SPEC "crtend.o%s"
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+ 
+ #define STARTFILE_SPEC "%{!shared: \
+ 			 %{!symbolic: \
+ 			  %{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}}\
+-			crtbegin.o%s"
++			crti.o%s crtbegin.o%s"
+ 
+ #undef DBX_REGISTER_NUMBER
+ #define DBX_REGISTER_NUMBER(n) \
+--- newlib-2.1.0/newlib/libc/include/machine/_default_types.h-orig	2014-02-02 15:13:50.000000000 -0600
++++ newlib-2.1.0/newlib/libc/include/machine/_default_types.h	2014-02-02 16:01:23.000000000 -0600
+@@ -25,7 +25,11 @@
+ 
+ #ifdef __INT8_TYPE__
+ typedef __INT8_TYPE__ __int8_t;
++#ifdef __UINT8_TYPE__
+ typedef __UINT8_TYPE__ __uint8_t;
++#else
++typedef unsigned __INT8_TYPE__ __uint8_t;
++#endif
+ #define ___int8_t_defined 1
+ #elif __EXP(SCHAR_MAX) == 0x7f
+ typedef signed char __int8_t ;
+@@ -35,7 +39,11 @@
+ 
+ #ifdef __INT16_TYPE__
+ typedef __INT16_TYPE__ __int16_t;
++#ifdef __UINT16_TYPE__
+ typedef __UINT16_TYPE__ __uint16_t;
++#else
++typedef unsigned __INT16_TYPE__ __uint16_t;
++#endif
+ #define ___int16_t_defined 1
+ #elif __EXP(INT_MAX) == 0x7fff
+ typedef signed int __int16_t;
+@@ -53,7 +61,11 @@
+ 
+ #ifdef __INT32_TYPE__
+ typedef __INT32_TYPE__ __int32_t;
++#ifdef __UINT32_TYPE__
+ typedef __UINT32_TYPE__ __uint32_t;
++#else
++typedef unsigned __INT32_TYPE__ __uint32_t;
++#endif
+ #define ___int32_t_defined 1
+ #elif __EXP(INT_MAX) == 0x7fffffffL
+ typedef signed int __int32_t;
+@@ -75,7 +87,11 @@
+ 
+ #ifdef __INT64_TYPE__
+ typedef __INT64_TYPE__ __int64_t;
++#ifdef __UINT64_TYPE__
+ typedef __UINT64_TYPE__ __uint64_t;
++#else
++typedef unsigned __INT64_TYPE__ __uint64_t;
++#endif
+ #define ___int64_t_defined 1
+ #elif __EXP(LONG_MAX) > 0x7fffffff
+ typedef signed long __int64_t;
+@@ -102,7 +118,11 @@
+ 
+ #ifdef __INT_LEAST8_TYPE__
+ typedef __INT_LEAST8_TYPE__ __int_least8_t;
++#ifdef __UINT_LEAST8_TYPE__
+ typedef __UINT_LEAST8_TYPE__ __uint_least8_t;
++#else
++typedef unsigned __INT_LEAST8_TYPE__ __uint_least8_t;
++#endif
+ #define ___int_least8_t_defined 1
+ #elif defined(___int8_t_defined)
+ typedef __int8_t __int_least8_t;
+@@ -124,7 +144,11 @@
+ 
+ #ifdef __INT_LEAST16_TYPE__
+ typedef __INT_LEAST16_TYPE__ __int_least16_t;
++#ifdef __UINT_LEAST16_TYPE__
+ typedef __UINT_LEAST16_TYPE__ __uint_least16_t;
++#else
++typedef unsigned __INT_LEAST16_TYPE__ __uint_least16_t;
++#endif
+ #define ___int_least16_t_defined 1
+ #elif defined(___int16_t_defined)
+ typedef __int16_t __int_least16_t;
+@@ -142,7 +166,11 @@
+ 
+ #ifdef __INT_LEAST32_TYPE__
+ typedef __INT_LEAST32_TYPE__ __int_least32_t;
++#ifdef __UINT_LEAST32_TYPE__
+ typedef __UINT_LEAST32_TYPE__ __uint_least32_t;
++#else
++typedef unsigned __INT_LEAST32_TYPE__ __uint_least32_t;
++#endif
+ #define ___int_least32_t_defined 1
+ #elif defined(___int32_t_defined)
+ typedef __int32_t __int_least32_t;
+@@ -156,7 +184,11 @@
+ 
+ #ifdef __INT_LEAST64_TYPE__
+ typedef __INT_LEAST64_TYPE__ __int_least64_t;
++#ifdef __UINT_LEAST64_TYPE__
+ typedef __UINT_LEAST64_TYPE__ __uint_least64_t;
++#else
++typedef unsigned __INT_LEAST64_TYPE__ __uint_least64_t;
++#endif
+ #define ___int_least64_t_defined 1
+ #elif defined(___int64_t_defined)
+ typedef __int64_t __int_least64_t;
+@@ -166,7 +198,11 @@
+ 
+ #ifdef __INTPTR_TYPE__
+ typedef __INTPTR_TYPE__ __intptr_t;
++#ifdef __UINTPTR_TYPE__
+ typedef __UINTPTR_TYPE__ __uintptr_t;
++#else
++typedef unsigned __INTPTR_TYPE__ __uintptr_t;
++#endif
+ #elif defined(__PTRDIFF_TYPE__)
+ typedef __PTRDIFF_TYPE__ __intptr_t;
+ typedef unsigned __PTRDIFF_TYPE__ __uintptr_t;
