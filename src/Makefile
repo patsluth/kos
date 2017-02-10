@@ -181,6 +181,7 @@ vclean: clean
 	@for d in $(SUBDIRS); do $(MAKE) -C $$d $@; done
 	rm -f Makefile.state Makefile.dep
 	rm -f /tmp/$$USER/KOS.dbg /tmp/$$USER/KOS.serial /tmp/$$USER/KOS.pipe /tmp/$$USER/qemu.log
+	find ./ -name 'Makefile.dep' -delete
 
 dep depend Makefile.dep: main/UserMain.h
 	@for d in $(SUBDIRS); do $(MAKE) -C $$d $@; done
