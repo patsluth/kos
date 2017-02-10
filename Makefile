@@ -13,7 +13,7 @@ tgz: vclean
 	rm -f kos.tgz; tar czvf kos.tgz --xform 's,,kos/,' \
 	--exclude src/extern/acpica --exclude src/extern/lwip/lwip \
 	--exclude cfg/Logs --exclude cfg/KOS.vbox --exclude cfg/KOS.vbox-prev \
-	cfg config LICENSE Makefile patches README setup_crossenv.sh src
+	cfg config LICENSE Makefile Makefile.dep patches README setup_crossenv.sh src
 
 .DEFAULT:
 	nice -10 $(MAKE) -C src -j $(shell fgrep processor /proc/cpuinfo|wc -l) $@
