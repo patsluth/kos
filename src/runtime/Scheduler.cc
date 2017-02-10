@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,13 +20,18 @@
 #include "runtime/Thread.h"
 #include "kernel/Output.h"
 
-Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this) {
-  Thread* idleThread = Thread::create((vaddr)idleStack, minimumStack);
-  idleThread->setAffinity(this)->setPriority(idlePriority);
-  // use low-level routines, since runtime context might not exist
-  idleThread->stackPointer = stackInit(idleThread->stackPointer, &Runtime::getDefaultMemoryContext(), (ptr_t)Runtime::idleLoop, this, nullptr, nullptr);
-  readyQueue[idlePriority].push_back(*idleThread);
-  readyCount += 1;
+
+Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this)
+{
+  	Thread* idleThread = Thread::create((vaddr)idleStack, minimumStack);
+  	idleThread->setAffinity(this)->setPriority(idlePriority);
+  	// use low-level routines, since runtime context might not exist
+  	idleThread->stackPointer = stackInit(idleThread->stackPointer, &Runtime::getDefaultMemoryContext(), (ptr_t)Runtime::idleLoop, this, nullptr, nullptr);
+  	readyQueue[idlePriority].push_back(*idleThread);
+  	readyCount += 1;
+
+	threadTree = new Tree<ThreadNode>();
+	threadTree->insert(*(new ThreadNode(idleThread)));
 }
 
 static inline void unlock() {}
@@ -59,6 +64,13 @@ i += 1) {
   return;                                         // return to current thread
 
 threadFound:
+
+
+
+
+
+
+
   readyLock.release();
   resumption += 1;
   Thread* currThread = Runtime::getCurrThread();
@@ -72,6 +84,13 @@ threadFound:
 
   Runtime::MemoryContext& ctx = Runtime::getMemoryContext();
   Runtime::setCurrThread(nextThread);
+
+
+
+ //  	threadTree->insert(*(new ThreadNode(nextThread)));
+
+
+
   Thread* prevThread = stackSwitch(currThread, target, &currThread->stackPointer, nextThread->stackPointer);
   // REMEMBER: Thread might have migrated from other processor, so 'this'
   //           might not be currThread's Scheduler object anymore.
@@ -96,18 +115,23 @@ extern "C" void invokeThread(Thread* prevThread, Runtime::MemoryContext* ctx, fu
   Runtime::getScheduler()->terminate();
 }
 
-void Scheduler::enqueue(Thread& t) {
-  GENASSERT1(t.priority < maxPriority, t.priority);
-  readyLock.acquire();
-  readyQueue[t.priority].push_back(t);
-  bool wake = (readyCount == 0);
-  readyCount += 1;
-  readyLock.release();
-  Runtime::debugS("Thread ", FmtHex(&t), " queued on ", FmtHex(this));
-  if (wake) Runtime::wakeUp(this);
+void Scheduler::enqueue(Thread& t)
+{
+  	GENASSERT1(t.priority < maxPriority, t.priority);
+  	readyLock.acquire();
+  	readyQueue[t.priority].push_back(t);
+  	bool wake = (readyCount == 0);
+  	readyCount += 1;
+  	readyLock.release();
+  	Runtime::debugS("Thread ", FmtHex(&t), " queued on ", FmtHex(this));
+  	if (wake) Runtime::wakeUp(this);
+
+
+	threadTree->insert(*(new ThreadNode(&t)));
 }
 
 void Scheduler::resume(Thread& t) {
+
   GENASSERT1(&t != Runtime::getCurrThread(), Runtime::getCurrThread());
   if (t.nextScheduler) t.nextScheduler->enqueue(t);
   else Runtime::getScheduler()->enqueue(t);
@@ -135,6 +159,22 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
       */
 
    }
+
+
+
+
+
+
+   // target->threadTree->insert(*(new ThreadNode(idleThread)));
+
+
+
+
+
+
+
+
+
 
 #if TESTING_ALWAYS_MIGRATE
   if (!target) target = partner;

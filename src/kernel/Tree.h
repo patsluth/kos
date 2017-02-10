@@ -20,6 +20,10 @@
 //Add a thread to the tree. anyThreadClassObject is an object of ThreadClass
 //readyTree->insert(*(new ThreadNode(*anyThreadClassObject)));
 
+#ifndef _Tree_h_
+#define _Tree_h_ 1
+
+#include "runtime/Thread.h"
 
 
 template <class T>
@@ -130,6 +134,7 @@ private:
         if (!n->p) return root;
         if (n->p->l == n) return n->p->l;
         if (n->p->r == n) return n->p->r;
+		return n->p;
     }
 
     void augment(node *n) {
@@ -191,3 +196,5 @@ class ThreadNode
 		th = t;
 	}
 };
+
+#endif /* _Tree_h_ */
