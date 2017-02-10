@@ -8,7 +8,5 @@ static void UserMain() {
   LockTest();
   TcpTest();
   Experiments();
-  TcpTest();
   InitProcess();
-  Experiments();
 }
