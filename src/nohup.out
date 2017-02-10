@@ -1,0 +1,7 @@
+
+(process:32477): GLib-WARNING **: gmem.c:483: custom memory allocation vtable not supported
+
+(process:473): GLib-WARNING **: gmem.c:483: custom memory allocation vtable not supported
+qemu-system-x86_64: -s: Failed to bind socket: Address already in use
+
+(process:3947): GLib-WARNING **: gmem.c:483: custom memory allocation vtable not supported

@@ -31,7 +31,7 @@ Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(th
   	readyCount += 1;
 
 	threadTree = new Tree<ThreadNode>();
-	threadTree->insert(*(new ThreadNode(idleThread)));
+	// threadTree->insert(*(new ThreadNode(idleThread)));
 }
 
 static inline void unlock() {}
@@ -86,6 +86,49 @@ threadFound:
   Runtime::setCurrThread(nextThread);
 
 
+if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler == this) {
+
+
+  	ThreadNode *currThreadNode = new ThreadNode(currThread);
+	ThreadNode *findNode = new ThreadNode(currThread);
+
+  	auto foundNode = this->threadTree->find(*currThreadNode);
+ //  	ThreadNode _ttt = (ThreadNode)foundNode->item;
+	//KOUT::outl(_ttt.th->priority);
+
+  	//if (*&(_ttt.th->nextScheduler) == this) {
+  	//} else {
+	 // threadTree->insert(*findNode);
+	 if (foundNode != nullptr) {
+		 //auto __test = (ThreadNode)(foundNode->item);
+		 // if (__test.th->nextScheduler == this) {
+		// if (((ThreadNode)(foundNode->item)).th == findNode->th) {
+		  	KOUT::outl("A");
+			this->threadTree->erase(foundNode);
+	// } else {
+		//   /	KOUT::outl("B");
+	// }
+	}
+	// else {
+
+
+		ThreadNode *nextThreadNode = new ThreadNode(nextThread);
+		// if (((ThreadNode)(foundNode->item)).th == findNode->th) {
+			//  	KOUT::outl(currThread->nextScheduler->threadTree->root->size);
+			this->threadTree->insert(*nextThreadNode);
+		// threadTree->insert(*findNode);
+		KOUT::outl("C");
+	// }
+}
+
+		// KOUT::outl(foundNode == NULL ? "NULL" : "NOT NULL");
+  //	KOUT::outl(threadTree->root->size);
+  	//}
+
+
+
+
+
 
  //  	threadTree->insert(*(new ThreadNode(nextThread)));
 
@@ -127,7 +170,7 @@ void Scheduler::enqueue(Thread& t)
   	if (wake) Runtime::wakeUp(this);
 
 
-	threadTree->insert(*(new ThreadNode(&t)));
+
 }
 
 void Scheduler::resume(Thread& t) {
