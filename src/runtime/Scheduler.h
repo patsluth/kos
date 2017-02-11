@@ -52,6 +52,11 @@ public:
   void suspend(BasicLock& lk1, BasicLock& lk2);
   void terminate() __noreturn;
   void yield();
+  static int minGranularity;  
+  static int epochLength;
+  static int defaultEpochLength; 
+  
+  
 };
 
 #endif /* _Scheduler_h_ */

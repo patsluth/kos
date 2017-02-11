@@ -393,6 +393,51 @@ apDone:
   DBG::outl(DBG::Boot, "Starting CDI devices...");
   // find and install CDI drivers for PCI devices - need interrupts for sleep
   for (const PCIDevice& pd : pciDevList) findCdiDriver(pd);
+  
+  auto iter = kernelFS.find("schedparam");      //code modified from Kernel.cc
+  if (iter == kernelFS.end()) {                 //this is only for printing,
+    KOUT::outl("schedparam not found");         
+  } else {
+    FileAccess f(iter->second);
+    int i = 0;
+    int j = 0;
+    char name[16];
+    char number[8];
+    memset(name, 0, sizeof(name));
+    memset(number, 0, sizeof(number));
+    for (;;) {
+      char c;
+      if (f.read(&c, 1) == 0) break;
+        if (isalpha(c)) {
+          name[i] = c;
+          i++;
+        }
+        if (isdigit(c)) {
+          number[j] = c;
+          j++;
+        }        
+      if (c == '\n') {
+        i = 0;
+        j = 0;
+        int value = atoi(number);
+        if (strcmp(name, "mingranularity") == 0) {
+            //TODO: convert from ms to RTC interupts
+            //TODO: update scheduler value accordingly
+            KOUT::outl("mingranularity: ", value);
+        } 
+        if (strcmp(name, "epochlen") == 0) {
+            //TODO: convert from ms to RTC interupts
+            //TODO: update scheduler value accordingly
+            //TODO: update scheduler default value accordingly
+            KOUT::outl("epochlen: ", value);
+        }
+        memset(name, 0, sizeof(name));
+        memset(number, 0, sizeof(number));
+      }
+    }
+    
+    KOUT::outl();
+  }
 
   // start irq thread after cdi init -> avoid interference from device irqs
   DBG::outl(DBG::Boot, "Creating IRQ thread...");
