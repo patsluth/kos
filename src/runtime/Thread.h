@@ -11,9 +11,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************/
+    You should have received a************************************************/
 #ifndef _Thread_h_
 #define _Thread_h_ 1
 
@@ -28,7 +26,7 @@ class Thread : public EmbeddedList<Thread>::Link
 
 public:
 
-uint64_t vRuntime = 0;
+	uint64_t vRuntime = 0;
 
   friend class Scheduler;   // Scheduler accesses many internals
   friend void Runtime::postResume(bool, Thread&, AddressSpace&);

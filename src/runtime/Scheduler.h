@@ -52,9 +52,9 @@ public:
   void suspend(BasicLock& lk1, BasicLock& lk2);
   void terminate() __noreturn;
   void yield();
-  static int minGranularity;
-  static int epochLength;
-  static int defaultEpochLength;
+  static uint64_t minGranularity;
+  static uint64_t epochLength;
+  static uint64_t defaultEpochLength;
 
 
 };

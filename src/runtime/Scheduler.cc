@@ -41,6 +41,11 @@ static inline Tree<ThreadNode> *globalThreadTree()
 	return _globalThreadTree;
 }
 
+// Initialize static variables
+uint64_t Scheduler::minGranularity = 1;
+uint64_t Scheduler::epochLength = 1;
+uint64_t Scheduler::defaultEpochLength = 1;
+
 static inline void unlock() {}
 
 template<typename... Args>
@@ -180,20 +185,21 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
 
    if (currentThread != nullptr) { // && nextThread != nullptr && nextThread->nextScheduler == this) {
 
-   		// TODO: update vRuntime of currThread;
-		currentThread->vRuntime += 1;
+   		// TODO: confirm this is correct
+		currentThread->vRuntime += Scheduler::epochLength;
 
 		// psuedocode
-   			// If currThread has already run for minGranularity
-   				// If currThread.vRuntime < leftmostThread.vRuntime
-   					// continue currThread
-   				// Else
-   					// insert currThread back into tree
-   					// Pick leftmostThread to run
+		// update vRuntime of currentThread
+		// If currentThread has already run for minGranularity
+			// If currentThread.vRuntime < leftmostThread.vRuntime
+				// continue currentThread
+			// Else
+				// insert currThread back into tree
+				// Pick leftmostThread to run
 
 
 
-		if (currentThread->vRuntime >= minGranularity) {
+		if (currentThread->vRuntime >= Scheduler::minGranularity) {
 			if (globalThreadTree()->empty() == false && globalThreadTree()->readMinNode() != NULL) {
 				ThreadNode *minThreadNode = globalThreadTree()->popMinNode();
 				Thread *minThread = minThreadNode->thread;
