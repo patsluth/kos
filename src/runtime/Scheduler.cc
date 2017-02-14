@@ -95,10 +95,16 @@ threadFound:
 
 	if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler == this) {
 
-		ThreadNode *currThreadNode = new ThreadNode(currThread);
-		ThreadNode *findNode = new ThreadNode(currThread);
+		//ThreadNode *currThreadNode = new ThreadNode(currThread);
+		//ThreadNode *findNode = new ThreadNode(currThread);
 
-		if (globalProcessTree() != NULL){}
+		if (globalProcessTree()->empty() == false) {
+
+			ThreadNode *minThreadNode = globalProcessTree()->readMinNode();
+			if (minThreadNode->thread->vRuntime){}
+
+		}
+
 
   		//auto foundNode = Scheduler::globalProcessTree->find(*currThreadNode);
  //  	ThreadNode _ttt = (ThreadNode)foundNode->item;

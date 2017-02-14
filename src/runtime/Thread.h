@@ -28,6 +28,8 @@ class Thread : public EmbeddedList<Thread>::Link
 
 public:
 
+uint64_t vRuntime = 0;
+
   friend class Scheduler;   // Scheduler accesses many internals
   friend void Runtime::postResume(bool, Thread&, AddressSpace&);
 

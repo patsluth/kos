@@ -26,38 +26,6 @@
 #include "runtime/Thread.h"
 
 
-
-
-// Class for tree node
-class ThreadNode
-{
-	friend class Scheduler;
-	Thread *th;
-
-	public:
-		bool operator < (ThreadNode other) const
-		{
-			return th->priority < other.th->priority;
-		}
-		bool operator == (ThreadNode other) const
-		{
-			return th->priority == other.th->priority;
-		}
-		bool operator > (ThreadNode other) const
-		{
-			return th->priority > other.th->priority;
-		}
-
-	//this is how we want to do it
-	ThreadNode(Thread *t)
-	{
-		th = t;
-	}
-};
-
-
-
-
 template <class T>
 class Tree
 {
@@ -145,12 +113,10 @@ public:
 				n -= sz(cur->l);//  1;
 				cur = cur->r;
 			}
-
             else break;
         } return cur; }
 
 private:
-
     inline int sz(node *n) const { return n ? n->size : 0; }
     inline int height(node *n) const { return n ? n->height : -1; }
     inline bool left_heavy(node *n) const {
@@ -204,15 +170,31 @@ private:
 };
 
 
+// Class for tree node
+class ThreadNode
+{
+	friend class Scheduler;
+	Thread *thread;
 
+	public:
+		bool operator < (ThreadNode other) const
+		{
+			return thread->priority < other.thread->priority;
+		}
+		bool operator == (ThreadNode other) const
+		{
+			return thread->priority == other.thread->priority;
+		}
+		bool operator > (ThreadNode other) const
+		{
+			return thread->priority > other.thread->priority;
+		}
 
-
-
-
-
-
-
-
-
+	//this is how we want to do it
+	ThreadNode(Thread *t)
+	{
+		thread = t;
+	}
+};
 
 #endif /* _Tree_h_ */
