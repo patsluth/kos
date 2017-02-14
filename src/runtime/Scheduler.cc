@@ -32,6 +32,15 @@ Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(th
   	readyCount += 1;
 }
 
+static Tree<ThreadNode> *_globalProcessTree;	// Don't access directly!!
+static inline Tree<ThreadNode> *globalProcessTree()
+{
+	if (_globalProcessTree == NULL) {
+		_globalProcessTree = new Tree<ThreadNode>();
+	}
+	return _globalProcessTree;
+}
+
 static inline void unlock() {}
 
 template<typename... Args>
@@ -86,11 +95,12 @@ threadFound:
 
 	if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler == this) {
 
+		ThreadNode *currThreadNode = new ThreadNode(currThread);
+		ThreadNode *findNode = new ThreadNode(currThread);
 
-  		//ThreadNode *currThreadNode = new ThreadNode(currThread);
-		//ThreadNode *findNode = new ThreadNode(currThread);
+		if (globalProcessTree() != NULL){}
 
-  		//auto foundNode = this->threadTree->find(*currThreadNode);
+  		//auto foundNode = Scheduler::globalProcessTree->find(*currThreadNode);
  //  	ThreadNode _ttt = (ThreadNode)foundNode->item;
 	//KOUT::outl(_ttt.th->priority);
 

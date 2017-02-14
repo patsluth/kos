@@ -145,20 +145,11 @@ public:
 				n -= sz(cur->l);//  1;
 				cur = cur->r;
 			}
+
             else break;
         } return cur; }
 
-	Tree *globalProcessTree()
-	{
-		if (_globalProcessTree == nullptr) {
-			_globalProcessTree = new Tree<ThreadNode>();
-		}
-		return _globalProcessTree;
-	}
-
 private:
-
-	static Tree<ThreadNode> *_globalProcessTree;
 
     inline int sz(node *n) const { return n ? n->size : 0; }
     inline int height(node *n) const { return n ? n->height : -1; }
@@ -211,5 +202,17 @@ private:
                 n = n->p; }
             n = n->p; } }
 };
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif /* _Tree_h_ */
