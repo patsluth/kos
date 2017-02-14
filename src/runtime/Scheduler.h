@@ -20,8 +20,6 @@
 #include "generic/EmbeddedContainers.h"
 #include "runtime/Runtime.h"
 
-#include "kernel/Tree.h"
-
 class Thread;
 
 class Scheduler {
@@ -36,15 +34,6 @@ class Scheduler {
   volatile mword resumption;
 
   Scheduler* partner;
-
-
-
-
-  Tree<ThreadNode> *threadTree;
-	
-
-
-
 
   template<typename... Args>
   inline void switchThread(Scheduler* target, Args&... a);
@@ -63,11 +52,11 @@ public:
   void suspend(BasicLock& lk1, BasicLock& lk2);
   void terminate() __noreturn;
   void yield();
-  static int minGranularity;  
+  static int minGranularity;
   static int epochLength;
-  static int defaultEpochLength; 
-  
-  
+  static int defaultEpochLength;
+
+
 };
 
 #endif /* _Scheduler_h_ */

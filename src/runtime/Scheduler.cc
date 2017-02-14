@@ -20,6 +20,7 @@
 #include "runtime/Thread.h"
 #include "kernel/Output.h"
 
+#include "kernel/Tree.h"
 
 Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this)
 {
@@ -29,9 +30,6 @@ Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(th
   	idleThread->stackPointer = stackInit(idleThread->stackPointer, &Runtime::getDefaultMemoryContext(), (ptr_t)Runtime::idleLoop, this, nullptr, nullptr);
   	readyQueue[idlePriority].push_back(*idleThread);
   	readyCount += 1;
-
-	threadTree = new Tree<ThreadNode>();
-	// threadTree->insert(*(new ThreadNode(idleThread)));
 }
 
 static inline void unlock() {}
@@ -86,40 +84,40 @@ threadFound:
   Runtime::setCurrThread(nextThread);
 
 
-if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler == this) {
+	if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler == this) {
 
 
-  	ThreadNode *currThreadNode = new ThreadNode(currThread);
-	ThreadNode *findNode = new ThreadNode(currThread);
+  		//ThreadNode *currThreadNode = new ThreadNode(currThread);
+		//ThreadNode *findNode = new ThreadNode(currThread);
 
-  	auto foundNode = this->threadTree->find(*currThreadNode);
+  		//auto foundNode = this->threadTree->find(*currThreadNode);
  //  	ThreadNode _ttt = (ThreadNode)foundNode->item;
 	//KOUT::outl(_ttt.th->priority);
 
   	//if (*&(_ttt.th->nextScheduler) == this) {
   	//} else {
 	 // threadTree->insert(*findNode);
-	 if (foundNode != nullptr) {
+	 	//if (foundNode != nullptr) {
 		 //auto __test = (ThreadNode)(foundNode->item);
 		 // if (__test.th->nextScheduler == this) {
 		// if (((ThreadNode)(foundNode->item)).th == findNode->th) {
-		  	KOUT::outl("A");
-			this->threadTree->erase(foundNode);
+		  		//KOUT::outl("A");
+				//this->threadTree->erase(foundNode);
 	// } else {
 		//   /	KOUT::outl("B");
 	// }
-	}
+	//}
 	// else {
 
 
-		ThreadNode *nextThreadNode = new ThreadNode(nextThread);
+			//ThreadNode *nextThreadNode = new ThreadNode(nextThread);
 		// if (((ThreadNode)(foundNode->item)).th == findNode->th) {
 			//  	KOUT::outl(currThread->nextScheduler->threadTree->root->size);
-			this->threadTree->insert(*nextThreadNode);
+			//this->threadTree->insert(*nextThreadNode);
 		// threadTree->insert(*findNode);
-		KOUT::outl("C");
+			//KOUT::outl("C");
 	// }
-}
+	}
 
 		// KOUT::outl(foundNode == NULL ? "NULL" : "NOT NULL");
   //	KOUT::outl(threadTree->root->size);
@@ -129,8 +127,8 @@ if (currThread != nullptr && nextThread != nullptr && nextThread->nextScheduler 
 
 
 
-
- //  	threadTree->insert(*(new ThreadNode(nextThread)));
+	//Tree:::
+   //threadTree->insert(*(new ThreadNode(nextThread)));
 
 
 
