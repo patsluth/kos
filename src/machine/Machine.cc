@@ -394,48 +394,45 @@ apDone:
   // find and install CDI drivers for PCI devices - need interrupts for sleep
   for (const PCIDevice& pd : pciDevList) findCdiDriver(pd);
   
-  auto iter = kernelFS.find("schedparam");      //code modified from Kernel.cc
-  if (iter == kernelFS.end()) {                 //this is only for printing,
-    KOUT::outl("schedparam not found");         
-  } else {
-    FileAccess f(iter->second);
-    int i = 0;
+  auto iter = kernelFS.find("schedparam");              //code modified from Kernel.cc
+  if (iter == kernelFS.end()) {                         //checks if schedparam exists
+    KOUT::outl("schedparam not found");                 //if not, print error
+  } else {                                              //else, parse it
+    FileAccess f(iter->second);                         
+    int i = 0;                                          //initialize vars
     int j = 0;
-    char name[16];
+    char name[16];                                      //initialize buffers
     char number[8];
-    memset(name, 0, sizeof(name));
+    memset(name, 0, sizeof(name));                      //ensure buffers are clear
     memset(number, 0, sizeof(number));
-    for (;;) {
-      char c;
-      if (f.read(&c, 1) == 0) break;
-        if (isalpha(c)) {
-          name[i] = c;
-          i++;
+    for (;;) {                                          //loop through chars in the file
+      char c;   
+      if (f.read(&c, 1) == 0) break;                    //exit on end of file
+        if (isalpha(c)) {                               //if char is a letter
+          name[i] = c;                                  //store in name buffer
+          i++;                                          //increment i
         }
-        if (isdigit(c)) {
-          number[j] = c;
-          j++;
+        if (isdigit(c)) {                               //if char in a number
+          number[j] = c;                                //store in number buffer
+          j++;                                          //increment j
         }        
-      if (c == '\n') {
-        i = 0;
+      if (c == '\n') {                                  //if char denotes newline
+        i = 0;                                          //reset i and j
         j = 0;
-        int value = atoi(number);
-        if (strcmp(name, "mingranularity") == 0) {
-            //TODO: convert from ms to RTC interupts
-            //TODO: update scheduler value accordingly
-            KOUT::outl("mingranularity: ", value);
+        int value = atoi(number);                       //convert number buffer to int, store in value
+        if (strcmp(name, "mingranularity") == 0) {      //if name buffer contains "mingranularity"
+            Scheduler::minGranularity = value;          //update scheduler value accordingly
+            KOUT::outl("mingranularity: ", value);      //print the value
         } 
-        if (strcmp(name, "epochlen") == 0) {
-            //TODO: convert from ms to RTC interupts
-            //TODO: update scheduler value accordingly
-            //TODO: update scheduler default value accordingly
-            KOUT::outl("epochlen: ", value);
+        if (strcmp(name, "epochlen") == 0) {            //if name buffer contains "epochlen"
+            Scheduler::defaultEpochLength = value;      //update scheduler default value accordingly
+            Scheduler::epochLength = value;             //update scheduler value accordingly
+            KOUT::outl("epochlen: ", value);            //Print the value
         }
-        memset(name, 0, sizeof(name));
+        memset(name, 0, sizeof(name));                  //clear the buffers
         memset(number, 0, sizeof(number));
       }
     }
-    
     KOUT::outl();
   }
 
