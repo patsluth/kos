@@ -25,6 +25,15 @@
 #include "machine/Machine.h"
 #include "machine/Processor.h"
 
+static Tree<ThreadNode> *_globalThreadTree;	// Don't access directly!!
+static inline Tree<ThreadNode> *globalThreadTree()
+{
+	if (_globalThreadTree == NULL) {
+		_globalThreadTree = new Tree<ThreadNode>();
+	}
+	return _globalThreadTree;
+}
+
 Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this)
 {
   	Thread* idleThread = Thread::create((vaddr)idleStack, minimumStack);
@@ -33,15 +42,12 @@ Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(th
   	idleThread->stackPointer = stackInit(idleThread->stackPointer, &Runtime::getDefaultMemoryContext(), (ptr_t)Runtime::idleLoop, this, nullptr, nullptr);
   	readyQueue[idlePriority].push_back(*idleThread);
   	readyCount += 1;
-}
 
-static Tree<ThreadNode> *_globalThreadTree;	// Don't access directly!!
-static inline Tree<ThreadNode> *globalThreadTree()
-{
-	if (_globalThreadTree == NULL) {
-		_globalThreadTree = new Tree<ThreadNode>();
-	}
-	return _globalThreadTree;
+
+
+
+	ThreadNode *threadNode = new ThreadNode(idleThread);
+	globalThreadTree()->insert(*threadNode);
 }
 
 // Initialize static variables
@@ -101,7 +107,14 @@ threadFound:
   readyLock.release();
   resumption += 1;
   Thread* currThread = Runtime::getCurrThread();
-  GENASSERTN(currThread && nextThread && nextThread != currThread, currThread, ' ', nextThread);
+
+	if (currThread == nextThread) {
+		return;
+	}
+
+
+
+	GENASSERTN(currThread && nextThread && nextThread != currThread, currThread, ' ', nextThread);
 
   if (target) currThread->nextScheduler = target; // yield/preempt to given processor
   else currThread->nextScheduler = this;          // suspend/resume to same processor
