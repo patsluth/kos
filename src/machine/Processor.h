@@ -117,7 +117,7 @@ public:
     return x;
   }
   static mword checkLock() {
-    //KASSERT1(CPU::interruptsEnabled() == (getLockCount() == 0), getLockCount());
+    KASSERT1(CPU::interruptsEnabled() == (getLockCount() == 0), getLockCount());
     return getLockCount();
   }
   static void lockFake() {
@@ -129,14 +129,14 @@ public:
     decLockCount();
   }
   static void lock(bool check = false) {
-    //if (check) KASSERT1(checkLock() == 0, getLockCount());
+    if (check) KASSERT1(checkLock() == 0, getLockCount());
     // despite looking like trouble, I believe this is safe: race could cause
     // multiple calls to disableInterrupts(), but this is no problem!
     if slowpath(getLockCount() == 0) disableInterrupts();
     incLockCount();
   }
   static void unlock(bool check = false) {
-    //if (check) KASSERT1(checkLock() == 1, getLockCount());
+    if (check) KASSERT1(checkLock() == 1, getLockCount());
     decLockCount();
     // no races here (interrupts disabled)
     if slowpath(getLockCount() == 0) enableInterrupts();
