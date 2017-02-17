@@ -23,6 +23,7 @@
 #include "kernel/Tree.h"
 #include "kernel/Clock.h"
 #include "machine/Machine.h"
+#include "machine/Processor.h"
 
 Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this)
 {
@@ -64,14 +65,22 @@ inline void Scheduler::switchThread(Scheduler* target, Args&... a) {
   Thread* nextThread;
   readyLock.acquire();
 //  for (mword i = 0; i < (target ? idlePriority : maxPriority); i += 1) {
-  for (mword i = 0; i < ((target == this) ? idlePriority : maxPriority);
-i += 1) {
-    if (!readyQueue[i].empty()) {
-      nextThread = readyQueue[i].pop_front();
-      readyCount -= 1;
-      goto threadFound;
-    }
-  }
+  // (mword i = 0; i < ((target == this) ? idlePriority : maxPriority); i += 1) {
+    // if (!readyQueue[i].empty()) {
+    //   nextThread = readyQueue[i].pop_front();
+    //   readyCount -= 1;
+    //   goto threadFound;
+    // }
+
+	if (globalThreadTree()->empty() == false) {
+		ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
+		nextThread = minThreadNode->thread;
+		readyCount -= 1;
+		goto threadFound;
+	}
+
+
+  //}
   readyLock.release();
 
 	if (target == nullptr) {
@@ -97,6 +106,14 @@ threadFound:
   if (target) currThread->nextScheduler = target; // yield/preempt to given processor
   else currThread->nextScheduler = this;          // suspend/resume to same processor
   unlock(a...);                                   // ...thus can unlock now
+
+
+
+  //KOUT::outl("checkLock: ", LocalProcessor::checkLock());
+
+
+
+
   CHECK_LOCK_COUNT(1);
   Runtime::debugS("Thread switch <", (target ? 'Y' : 'S'), ">: ", FmtHex(currThread), '(', FmtHex(currThread->stackPointer), ") to ", FmtHex(nextThread), '(', FmtHex(nextThread->stackPointer), ')');
 
@@ -140,18 +157,14 @@ extern "C" void invokeThread(Thread* prevThread, Runtime::MemoryContext* ctx, fu
 
 void Scheduler::enqueue(Thread& t)
 {
-  	GENASSERT1(t.priority < maxPriority, t.priority);
+	GENASSERT1(t.priority < maxPriority, t.priority);
   	readyLock.acquire();
-  	readyQueue[t.priority].push_back(t);
+  	//readyQueue[t.priority].push_back(t);
   	bool wake = (readyCount == 0);
   	readyCount += 1;
   	readyLock.release();
   	Runtime::debugS("Thread ", FmtHex(&t), " queued on ", FmtHex(this));
   	if (wake) Runtime::wakeUp(this);
-
-
-
-
 
 
 	int numTasks = (globalThreadTree()->empty() == false) ? globalThreadTree()->root->size : 0;
@@ -174,39 +187,50 @@ void Scheduler::resume(Thread& t)
 {
 	GENASSERT1(&t != Runtime::getCurrThread(), Runtime::getCurrThread());
 
+
+
 	if (globalThreadTree()->empty() == false) {
 		ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
-		t.vRuntime -= minThreadNode->thread->vRuntime;
-		ThreadNode *threadNode = new ThreadNode(&t);
-		globalThreadTree()->insert(*threadNode);	// insert currentThread back into tree
+		t.vRuntime += minThreadNode->thread->vRuntime;
 	}
 
-  	if (t.nextScheduler) t.nextScheduler->enqueue(t);
-  	else Runtime::getScheduler()->enqueue(t);
+	ThreadNode *threadNode = new ThreadNode(&t);
+	globalThreadTree()->insert(*threadNode);
+
+
+
+
+	uint64_t temp = t.vRuntime;
+
+	if (t.nextScheduler) t.nextScheduler->enqueue(t);
+	else Runtime::getScheduler()->enqueue(t);
+
+	t.vRuntime = temp;
 }
 
 
 
-void Scheduler::preempt() {               // IRQs disabled, lock count inflated
+void Scheduler::preempt()
+{               // IRQs disabled, lock count inflated
 #if TESTING_NEVER_MIGRATE
   switchThread(this);
 #else /* migration enabled */
   //Scheduler* target =  Runtime::getCurrThread()->getAffinity();
-  Scheduler *target = nullptr;
-  mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
-
-  if( affinityMask == 0 ) {
-	  /* use Martin's code when no affinity is set via bit mask */
-	  target =  Runtime::getCurrThread()->getAffinity();
-   }  else {
-	  /* CPSC457l: Add code here to scan the affinity mask
-      * and select the processor with the smallest ready count.
-      * Set the scheduler of the selected processor as target
-      * switchThread(target) migrates the current thread to
-      * specified target's ready queue
-      */
-
-   }
+	Scheduler *target = nullptr;
+  // mword affinityMask = Runtime::getCurrThread()->getAffinityMask();
+  //
+  // if( affinityMask == 0 ) {
+  //  /* use Martin's code when no affinity is set via bit mask */
+  //  target =  Runtime::getCurrThread()->getAffinity();
+  //  }  else {
+  //  /* CPSC457l: Add code here to scan the affinity mask
+  //     * and select the processor with the smallest ready count.
+  //     * Set the scheduler of the selected processor as target
+  //     * switchThread(target) migrates the current thread to
+  //     * specified target's ready queue
+  //     */
+  //
+  //  }
 
 
 
@@ -255,8 +279,16 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
 		}
 	}
 
+	if (nextThread) {
+		if (target) {
+			nextThread->nextScheduler = target;	 // yield/preempt to given processor
+		} else {
+			nextThread->nextScheduler = Runtime::getScheduler();	// suspend/resume to same processor
+		}
 
-	//target = nextThread->nextScheduler;
+		target = nextThread->nextScheduler;
+	}
+
 
 
    	//auto foundNode = Scheduler::globalProcessTree->find(*currThreadNode);
@@ -289,18 +321,25 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
 
 
 
-#if TESTING_ALWAYS_MIGRATE
-  if (!target) target = partner;
-#else /* simple load balancing */
-  if (!target) target = (partner->readyCount + 2 < readyCount) ? partner : this;
-#endif
 
-  switchThread(target);
+
+// #if TESTING_ALWAYS_MIGRATE
+//   if (!target) target = partner;
+// #else /* simple load balancing */
+//   if (!target) target = (partner->readyCount + 2 < readyCount) ? partner : this;
+// #endif
+
+
+
+	switchThread(target);
 #endif
 }
 
 void Scheduler::suspend(BasicLock& lk)
 {
+	Runtime::FakeLock fl;
+	switchThread(nullptr, lk);
+
 	Thread *currentThread = Runtime::getCurrThread();
 
  	if (currentThread != nullptr) {
@@ -310,12 +349,14 @@ void Scheduler::suspend(BasicLock& lk)
 	 	}
  	}
 
-	Runtime::FakeLock fl;
-	switchThread(nullptr, lk);
+
 }
 
 void Scheduler::suspend(BasicLock& lk1, BasicLock& lk2)
 {
+  	Runtime::FakeLock fl;
+  	switchThread(nullptr, lk1, lk2);
+
 	Thread *currentThread = Runtime::getCurrThread();
 
  	if (currentThread != nullptr) {
@@ -324,9 +365,6 @@ void Scheduler::suspend(BasicLock& lk1, BasicLock& lk2)
 		 	currentThread->vRuntime -= minThreadNode->thread->vRuntime;
 	 	}
  	}
-
-  	Runtime::FakeLock fl;
-  	switchThread(nullptr, lk1, lk2);
 }
 
 void Scheduler::terminate() {

@@ -1,0 +1,4 @@
+
+(process:4937): GLib-WARNING **: gmem.c:483: custom memory allocation vtable not supported
+
+(process:6698): GLib-WARNING **: gmem.c:483: custom memory allocation vtable not supported
