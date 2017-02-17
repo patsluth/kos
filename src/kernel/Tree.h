@@ -179,15 +179,15 @@ class ThreadNode
 	public:
 		bool operator < (ThreadNode other) const
 		{
-			return thread->priority < other.thread->priority;
+			return thread->vRuntime < other.thread->vRuntime;
 		}
 		bool operator == (ThreadNode other) const
 		{
-			return thread->priority == other.thread->priority;
+			return thread->vRuntime == other.thread->vRuntime;
 		}
 		bool operator > (ThreadNode other) const
 		{
-			return thread->priority > other.thread->priority;
+			return thread->vRuntime > other.thread->vRuntime;
 		}
 
 	//this is how we want to do it

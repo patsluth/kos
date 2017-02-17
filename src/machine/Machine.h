@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #define _Machine_h_ 1
 
 #include "generic/basics.h"
+#include "devices/RTC.h"
 
 class Scheduler;
 class Thread;
@@ -38,6 +39,9 @@ class Machine : public NoObject {
   static void bootCleanup();
 
 public:
+
+	static RTC getRTC();
+
   static void initAP(mword idx)                        __section(".boot.text");
   static void initBSP(mword mag, vaddr mb, mword idx)  __section(".boot.text");
   static void bootMain();

@@ -21,6 +21,8 @@
 #include "kernel/Output.h"
 
 #include "kernel/Tree.h"
+#include "kernel/Clock.h"
+#include "machine/Machine.h"
 
 Scheduler::Scheduler() : readyCount(0), preemption(0), resumption(0), partner(this)
 {
@@ -71,7 +73,11 @@ i += 1) {
     }
   }
   readyLock.release();
-  GENASSERT0(target);
+
+	if (target == nullptr) {
+		return;
+	}
+
   GENASSERT0(!sizeof...(Args));
   return;                                         // return to current thread
 
@@ -96,6 +102,12 @@ threadFound:
 
   Runtime::MemoryContext& ctx = Runtime::getMemoryContext();
   Runtime::setCurrThread(nextThread);
+
+
+	nextThread->startTime = Machine::getRTC().tick();
+
+
+
 
 
 
@@ -139,13 +151,38 @@ void Scheduler::enqueue(Thread& t)
 
 
 
+
+
+
+	int numTasks = (globalThreadTree()->empty() == false) ? globalThreadTree()->root->size : 0;
+
+	if (Scheduler::defaultEpochLength <= (Scheduler::minGranularity * numTasks)) {
+		Scheduler::epochLength = Scheduler::defaultEpochLength;
+	} else {
+		Scheduler::epochLength = (numTasks * Scheduler::minGranularity);
+	}
+
+	if (globalThreadTree()->empty() == false) {
+		ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
+		t.vRuntime = minThreadNode->thread->vRuntime;
+	} else {
+		t.vRuntime = 0;
+	}
 }
 
-void Scheduler::resume(Thread& t) {
+void Scheduler::resume(Thread& t)
+{
+	GENASSERT1(&t != Runtime::getCurrThread(), Runtime::getCurrThread());
 
-  GENASSERT1(&t != Runtime::getCurrThread(), Runtime::getCurrThread());
-  if (t.nextScheduler) t.nextScheduler->enqueue(t);
-  else Runtime::getScheduler()->enqueue(t);
+	if (globalThreadTree()->empty() == false) {
+		ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
+		t.vRuntime -= minThreadNode->thread->vRuntime;
+		ThreadNode *threadNode = new ThreadNode(&t);
+		globalThreadTree()->insert(*threadNode);	// insert currentThread back into tree
+	}
+
+  	if (t.nextScheduler) t.nextScheduler->enqueue(t);
+  	else Runtime::getScheduler()->enqueue(t);
 }
 
 
@@ -185,8 +222,11 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
 
    if (currentThread != nullptr) { // && nextThread != nullptr && nextThread->nextScheduler == this) {
 
-   		// TODO: confirm this is correct
-		currentThread->vRuntime += Scheduler::epochLength;
+		uint64_t threadRuntime = Machine::getRTC().tick() - currentThread->startTime;
+		currentThread->vRuntime += (threadRuntime * currentThread->priority);
+
+		//KOUT::outl("cthreadRuntime: ", threadRuntime);
+		//KOUT::outl("currentThread->vRuntime: ", currentThread->vRuntime);
 
 		// psuedocode
 		// update vRuntime of currentThread
@@ -254,18 +294,39 @@ void Scheduler::preempt() {               // IRQs disabled, lock count inflated
 #else /* simple load balancing */
   if (!target) target = (partner->readyCount + 2 < readyCount) ? partner : this;
 #endif
+
   switchThread(target);
 #endif
 }
 
-void Scheduler::suspend(BasicLock& lk) {
-  Runtime::FakeLock fl;
-  switchThread(nullptr, lk);
+void Scheduler::suspend(BasicLock& lk)
+{
+	Thread *currentThread = Runtime::getCurrThread();
+
+ 	if (currentThread != nullptr) {
+	 	if (globalThreadTree()->empty() == false) {
+		 	ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
+		 	currentThread->vRuntime -= minThreadNode->thread->vRuntime;
+	 	}
+ 	}
+
+	Runtime::FakeLock fl;
+	switchThread(nullptr, lk);
 }
 
-void Scheduler::suspend(BasicLock& lk1, BasicLock& lk2) {
-  Runtime::FakeLock fl;
-  switchThread(nullptr, lk1, lk2);
+void Scheduler::suspend(BasicLock& lk1, BasicLock& lk2)
+{
+	Thread *currentThread = Runtime::getCurrThread();
+
+ 	if (currentThread != nullptr) {
+	 	if (globalThreadTree()->empty() == false) {
+		 	ThreadNode *minThreadNode = globalThreadTree()->readMinNode();
+		 	currentThread->vRuntime -= minThreadNode->thread->vRuntime;
+	 	}
+ 	}
+
+  	Runtime::FakeLock fl;
+  	switchThread(nullptr, lk1, lk2);
 }
 
 void Scheduler::terminate() {

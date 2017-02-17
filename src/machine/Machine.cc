@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright © 2012-2015 Martin Karsten
+    Copyright ï¿½ 2012-2015 Martin Karsten
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,6 +81,11 @@ static FrameManager frameManager;
 Keyboard keyboard;
 static RTC rtc;
 static PIT pit;
+
+RTC Machine::getRTC()
+{
+	return rtc;
+}
 
 // interrupt descriptor tables
 static const unsigned int maxIDT = 256;
@@ -393,12 +398,12 @@ apDone:
   DBG::outl(DBG::Boot, "Starting CDI devices...");
   // find and install CDI drivers for PCI devices - need interrupts for sleep
   for (const PCIDevice& pd : pciDevList) findCdiDriver(pd);
-  
+
   auto iter = kernelFS.find("schedparam");              //code modified from Kernel.cc
   if (iter == kernelFS.end()) {                         //checks if schedparam exists
     KOUT::outl("schedparam not found");                 //if not, print error
   } else {                                              //else, parse it
-    FileAccess f(iter->second);                         
+    FileAccess f(iter->second);
     int i = 0;                                          //initialize vars
     int j = 0;
     char name[16];                                      //initialize buffers
@@ -406,7 +411,7 @@ apDone:
     memset(name, 0, sizeof(name));                      //ensure buffers are clear
     memset(number, 0, sizeof(number));
     for (;;) {                                          //loop through chars in the file
-      char c;   
+      char c;
       if (f.read(&c, 1) == 0) break;                    //exit on end of file
         if (isalpha(c)) {                               //if char is a letter
           name[i] = c;                                  //store in name buffer
@@ -415,7 +420,7 @@ apDone:
         if (isdigit(c)) {                               //if char in a number
           number[j] = c;                                //store in number buffer
           j++;                                          //increment j
-        }        
+        }
       if (c == '\n') {                                  //if char denotes newline
         i = 0;                                          //reset i and j
         j = 0;
@@ -423,7 +428,7 @@ apDone:
         if (strcmp(name, "mingranularity") == 0) {      //if name buffer contains "mingranularity"
             Scheduler::minGranularity = value;          //update scheduler value accordingly
             KOUT::outl("mingranularity: ", value);      //print the value
-        } 
+        }
         if (strcmp(name, "epochlen") == 0) {            //if name buffer contains "epochlen"
             Scheduler::defaultEpochLength = value;      //update scheduler default value accordingly
             Scheduler::epochLength = value;             //update scheduler value accordingly
@@ -575,7 +580,7 @@ void Machine::setupIDTable() {
   for (size_t i = 0; i < MaxIrqCount; i += 1) {
     irqTable[i].ioApicAddr    = 0;
     irqTable[i].ioApicIrq     = 0;
-    irqTable[i].globalIrq     = i; 
+    irqTable[i].globalIrq     = i;
     irqTable[i].overrideFlags = 0;
   }
 
